@@ -56,6 +56,11 @@ try {
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Root Route
+app.get("/", (req, res) => {
+  res.send("Backend is live 🚀");
+});
+
 // Mount routers
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -91,4 +96,3 @@ mongoose.connect(config.MONGODB_URI, {
     console.log('MongoDB connection error: ', err);
     process.exit(1);
   });
-
