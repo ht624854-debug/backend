@@ -6,8 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const config = require('./config/config');
 const errorHandler = require('./middleware/error');
-// Firebase no longer needed for local storage
-// const firebase = require('./config/firebase');
+
 // Route files
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/product');
@@ -21,47 +20,72 @@ const uploadRoutes = require('./routes/upload');
 // Initialize Express app
 const app = express();
 
+/* =======================
+   BASIC MIDDLEWARE
+======================= */
+
 // Body parser
 app.use(express.json());
 
-// Enable CORS
+// Secure CORS (production-safe)
+const allowedOrigins = [
+  'https://trendyclothing.cloud',
+  'https://www.trendyclothing.cloud'
+];
+
 app.use(cors({
-  origin: config.CORS_ORIGIN,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 
-// Dev logging middleware
+// Dev logging
 if (config.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// Create uploads directory if it doesn't exist
+/* =======================
+   FILE SYSTEM SETUP
+======================= */
+
 const publicDir = path.join(__dirname, 'public');
 const uploadsDir = path.join(publicDir, 'uploads');
 
 try {
   if (!fs.existsSync(publicDir)) {
     fs.mkdirSync(publicDir, { recursive: true });
-    console.log('Created public directory');
   }
 
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log('Created uploads directory');
   }
 } catch (err) {
-  console.error('Error creating directories:', err);
+  console.error('Directory creation error:', err);
 }
 
-// Set static folder
-app.use(express.static(path.join(__dirname, 'public')));
+/* =======================
+   STATIC FILES
+======================= */
 
-// Root Route
-app.get("/", (req, res) => {
-  res.send("Backend is live 🚀");
+app.use(express.static(publicDir));
+
+/* =======================
+   HEALTH CHECK
+======================= */
+
+app.get('/', (req, res) => {
+  res.send('Backend is live 🚀');
 });
 
-// Mount routers
+/* =======================
+   API ROUTES
+======================= */
+
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
@@ -71,28 +95,35 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/upload', uploadRoutes);
 
-// Error handler
+/* =======================
+   ERROR HANDLER
+======================= */
+
 app.use(errorHandler);
 
-// Connect to MongoDB
-mongoose.connect(config.MONGODB_URI, {
-  // Connection options if needed
-})
+/* =======================
+   DATABASE + SERVER
+======================= */
+
+const PORT = config.PORT || process.env.PORT || 10000;
+
+mongoose
+  .connect(config.MONGODB_URI)
   .then(() => {
     console.log('MongoDB Connected');
-    // Start server
-    const server = app.listen(config.PORT, () => {
-      console.log(`Server running in ${config.NODE_ENV} mode on port ${config.PORT}`);
+
+    const server = app.listen(PORT, () => {
+      console.log(
+        `Server running in ${config.NODE_ENV} mode on port ${PORT}`
+      );
     });
 
-    // Handle unhandled promise rejections
-    process.on('unhandledRejection', (err, promise) => {
-      console.log(`Error: ${err.message}`);
-      // Close server & exit process
+    process.on('unhandledRejection', (err) => {
+      console.error('Unhandled Rejection:', err.message);
       server.close(() => process.exit(1));
     });
   })
   .catch((err) => {
-    console.log('MongoDB connection error: ', err);
+    console.error('MongoDB connection error:', err);
     process.exit(1);
   });
