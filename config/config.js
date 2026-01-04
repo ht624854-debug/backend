@@ -6,8 +6,16 @@ module.exports = {
   JWT_SECRET: process.env.JWT_SECRET || 'your-secret-key',
   JWT_EXPIRE: process.env.JWT_EXPIRE || '30d',
   NODE_ENV: process.env.NODE_ENV || 'development',
-  CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:8080',
-  BASE_URL: process.env.BASE_URL || 'http://localhost:5000',
+  BASE_URL: process.env.BASE_URL || 'https://api.trendyclothing.cloud',
+CORS_ORIGIN: process.env.CORS_ORIGIN || 'https://trendyclothing.cloud',
+
+  // CORS allowed origin (frontend)BASE_URL: 'https://api.trendyclothing.cloud', // localhost:5000 ko replace karo
+CORS_ORIGIN: 'https://trendyclothing.cloud',
+
+  CORS_ORIGIN: process.env.CORS_ORIGIN || 'https://trendyclothing.cloud',
+  
+  // Base URL for API & image references
+  BASE_URL: process.env.BASE_URL || 'https://api.trendyclothing.cloud',
   
   // Firebase config
   FIREBASE_API_KEY: process.env.FIREBASE_API_KEY,
@@ -16,4 +24,4 @@ module.exports = {
   FIREBASE_STORAGE_BUCKET: process.env.FIREBASE_STORAGE_BUCKET,
   FIREBASE_MESSAGING_SENDER_ID: process.env.FIREBASE_MESSAGING_SENDER_ID,
   FIREBASE_APP_ID: process.env.FIREBASE_APP_ID
-}; 
+};
